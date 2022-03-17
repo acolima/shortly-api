@@ -38,3 +38,27 @@ export async function getShortUrl(req, res) {
     res.sendStatus(500)
   }
 }
+
+export async function deleteUrl(req, res) {
+  const { id } = req.params
+  const { user } = res.locals
+
+  try {
+    const result = await connection.query(`
+      SELECT id FROM urls
+      WHERE id=$1 AND "userId"=$2
+    `, [id, user.id])
+
+    if (result.rowCount === 0) return res.sendStatus(401)
+
+    await connection.query(`
+      DELETE FROM urls
+      WHERE id=$1
+    `, [id])
+
+    res.sendStatus(204)
+  } catch (error) {
+    console.log(error)
+    res.sendStatus(500)
+  }
+}
