@@ -15,5 +15,6 @@ CREATE TABLE urls (
   id SERIAL PRIMARY KEY,
   url TEXT NOT NULL,
   "shortUrl" TEXT NOT NULL,
-  "userId" INTEGER NOT NULL REFERENCES users(id)
+  "userId" INTEGER NOT NULL REFERENCES users(id),
+  "visitCount" INTEGER NOT NULL DEFAULT 0
 )

@@ -29,9 +29,55 @@ export async function getUser(req, res) {
   const { user } = res.locals;
 
   try {
-    res.send(user);
+    const { rows: users } = await connection.query(`
+      SELECT id, name, email FROM users
+    `)
+    res.send(users);
   } catch (error) {
     console.log(error);
     return res.sendStatus(500);
   }
 }
+
+export async function getUserById(req, res) {
+  const { id } = req.params
+
+  try {
+    const { rows: user } = await connection.query(`
+      SELECT users.id, users.name, COUNT(urls."visitCount") AS "visitCount"
+        FROM users
+        LEFT JOIN urls ON urls."userId"=users.id
+      WHERE users.id=$1
+      GROUP BY users.id
+    `, [id])
+
+    if (user.length === 0) return res.sendStatus(404)
+
+    const { rows: usersUrls } = await connection.query(`
+      SELECT *
+      FROM urls
+      WHERE "userId"=$1
+    `, [id])
+
+    const response = {
+      id: user[0].id,
+      name: user[0].name,
+      visitCount: user[0].visitCount,
+      shortenedUrls: usersUrls.map(item => {
+        const url = {
+          id: item.id,
+          shortUrl: item.shortUrl,
+          url: item.url,
+          visitCount: item.visitCount
+        }
+        return url
+      })
+    }
+
+    res.send(response)
+
+  } catch (error) {
+    console.log(error)
+    res.sendStatus(500)
+  }
+} 
